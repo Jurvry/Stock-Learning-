@@ -1,0 +1,963 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Stock Learning Hub 🚀</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #00d4ff;
+            --secondary: #ff4081;
+            --background: #1a1a2e;
+            --card-bg: #16213e;
+            --text: #e94560;
+            --shadow: 0 8px 32px rgba(0, 212, 255, 0.2);
+            --light-bg: #f0f4f8;
+            --light-card: #ffffff;
+            --font-size-base: 16px;
+            --spacing-base: 1rem;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+            transition: all 0.3s ease;
+        }
+
+        html, body {
+            max-width: 100%;
+            overflow-x: hidden;
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Poppins', 'Arial', sans-serif;
+            background: radial-gradient(circle at center, var(--background), #0f3460);
+            color: #fff;
+            min-height: 100vh;
+            font-size: var(--font-size-base);
+            line-height: 1.6;
+            overscroll-behavior-y: none;
+        }
+
+        body.hebrew {
+            direction: rtl;
+        }
+
+        body.light-mode {
+            --background: #e0e7ff;
+            --card-bg: var(--light-card);
+            --text: #2c3e50;
+            color: #2c3e50;
+        }
+
+        body.locked main {
+            display: none;
+        }
+
+        .disclaimer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            padding: var(--spacing-base);
+            animation: fadeIn 0.5s ease;
+        }
+
+        .disclaimer-box {
+            background: var(--card-bg);
+            padding: calc(var(--spacing-base) * 1.5);
+            border-radius: 20px;
+            max-width: 90vw;
+            width: 100%;
+            text-align: center;
+            box-shadow: var(--shadow);
+        }
+
+        .disclaimer-box p {
+            margin-bottom: var(--spacing-base);
+            font-size: 1rem;
+        }
+
+        .disclaimer-box button {
+            padding: 1rem 2rem;
+            background: var(--primary);
+            color: #fff;
+            border: none;
+            border-radius: 30px;
+            cursor: pointer;
+            font-size: 1rem;
+            width: 100%;
+            max-width: 300px;
+        }
+
+        .disclaimer-box button:hover {
+            background: var(--secondary);
+            transform: scale(1.05);
+        }
+
+        header {
+            background: linear-gradient(45deg, var(--primary), var(--secondary));
+            padding: var(--spacing-base);
+            position: sticky;
+            top: 0;
+            z-index: 900;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: var(--shadow);
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            text-shadow: 0 0 20px rgba(255, 255, 255, 0.7);
+            flex-grow: 1;
+            margin-right: 1rem;
+        }
+
+        .controls {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .language-selector, .theme-toggle {
+            padding: 0.6rem;
+            background: var(--card-bg);
+            color: #fff;
+            border: 2px solid var(--primary);
+            border-radius: 10px;
+            font-size: 0.9rem;
+            cursor: pointer;
+        }
+
+        .light-mode .language-selector, .light-mode .theme-toggle {
+            color: #2c3e50;
+        }
+
+        h2 {
+            color: var(--primary);
+            margin: calc(var(--spacing-base) * 2) 0;
+            text-align: center;
+            font-size: calc(var(--font-size-base) * 1.5);
+            animation: slideIn 0.5s ease;
+        }
+
+        .card-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(min(250px, 45vw), 1fr));
+            gap: var(--spacing-base);
+            padding: var(--spacing-base);
+            max-width: 95vw;
+            margin: 0 auto;
+        }
+
+        .card {
+            perspective: 1000px;
+            height: 20vh;
+            min-height: 180px;
+            position: relative;
+            cursor: pointer;
+            animation: fadeInUp 0.5s ease;
+        }
+
+        .card-inner {
+            width: 100%;
+            height: 100%;
+            transform-style: preserve-3d;
+            transition: transform 0.8s ease;
+        }
+
+        .card-front, .card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 15px;
+            padding: var(--spacing-base);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            box-shadow: var(--shadow);
+        }
+
+        .card-front {
+            background: var(--card-bg);
+            color: var(--primary);
+            font-size: 1.2rem;
+            font-weight: 600;
+            border: 2px solid var(--primary);
+        }
+
+        .card-back {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: #fff;
+            font-size: 1rem;
+            transform: rotateY(180deg);
+            overflow-y: auto;
+        }
+
+        .card.flipped .card-inner {
+            transform: rotateY(180deg);
+        }
+
+        .card:hover:not(.flipped) .card-inner {
+            transform: rotateY(10deg);
+        }
+
+        .chart-container, .quiz-container, .chatbot, .puzzle-container {
+            max-width: 95vw;
+            width: 100%;
+            margin: calc(var(--spacing-base) * 2) auto;
+            padding: var(--spacing-base);
+            background: var(--card-bg);
+            border-radius: 20px;
+            box-shadow: var(--shadow);
+            animation: fadeInUp 0.5s ease;
+        }
+
+        .chart-container input, .chatbot input {
+            padding: 0.8rem;
+            border: 2px solid var(--primary);
+            border-radius: 30px;
+            background: #0f3460;
+            color: #fff;
+            font-size: var(--font-size-base);
+            width: 100%;
+            margin-bottom: 1rem;
+        }
+
+        .light-mode .chart-container input, .light-mode .chatbot input {
+            background: #e0e7ff;
+            color: #2c3e50;
+        }
+
+        button {
+            padding: 0.8rem 1.5rem;
+            background: var(--secondary);
+            color: #fff;
+            border: none;
+            border-radius: 30px;
+            cursor: pointer;
+            font-size: var(--font-size-base);
+            width: 100%;
+            max-width: 300px;
+            margin: 0.5rem auto;
+            display: block;
+        }
+
+        button:hover {
+            background: var(--primary);
+            transform: scale(1.05);
+        }
+
+        .chatbot::before {
+            content: "🤖";
+            position: absolute;
+            top: -2.5rem;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: calc(var(--font-size-base) * 2);
+            animation: float 2s infinite;
+        }
+
+        #ai-response {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: #0f3460;
+            border-radius: 15px;
+            font-size: var(--font-size-base);
+        }
+
+        .light-mode #ai-response {
+            background: #e0e7ff;
+            color: #2c3e50;
+        }
+
+        .suggestions {
+            margin-top: 1rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .suggestion {
+            padding: 0.5rem 1rem;
+            background: var(--primary);
+            color: #fff;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: calc(var(--font-size-base) * 0.9);
+        }
+
+        .suggestion:hover {
+            background: var(--secondary);
+            transform: scale(1.05);
+        }
+
+        .puzzle-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 0.5rem;
+            width: 100%;
+            position: relative;
+        }
+
+        .terms-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .puzzle-piece, .drop-zone {
+            background: var(--primary);
+            color: #fff;
+            padding: 1rem;
+            text-align: center;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            touch-action: none;
+            position: relative;
+            z-index: 1;
+        }
+
+        .puzzle-piece {
+            cursor: move;
+        }
+
+        .puzzle-piece.correct {
+            background: #00ff00;
+            color: #000;
+            cursor: default;
+            z-index: 2;
+        }
+
+        .puzzle-piece.correct::after {
+            content: "✅";
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            font-size: 1rem;
+        }
+
+        .drop-zone {
+            background: rgba(15, 52, 96, 0.5);
+            border: 2px dashed var(--primary);
+            cursor: default;
+            position: relative;
+        }
+
+        .drop-zone.filled {
+            border-style: solid;
+            background: rgba(0, 255, 0, 0.1);
+        }
+
+        .puzzle-result {
+            text-align: center;
+            margin-top: 1rem;
+            font-size: 1.2rem;
+        }
+
+        .progress-bar {
+            position: fixed;
+            bottom: 1rem;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80%;
+            max-width: 500px;
+            height: 10px;
+            background: #0f3460;
+            border-radius: 5px;
+            overflow: hidden;
+            z-index: 1000;
+        }
+
+        .light-mode .progress-bar {
+            background: #d1d8e0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--primary);
+            width: 0;
+            transition: width 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateX(-50%) translateY(0); }
+            50% { transform: translateX(-50%) translateY(-10px); }
+        }
+
+        @media (max-width: 768px) {
+            :root {
+                --font-size-base: 14px;
+                --spacing-base: 0.8rem;
+            }
+
+            h1 { font-size: 1.5rem; }
+            h2 { font-size: 1.2rem; }
+            .card { height: 15vh; min-height: 120px; }
+            .card-container { grid-template-columns: 1fr 1fr; }
+            .terms-container { grid-template-columns: 1fr; }
+            .puzzle-piece, .drop-zone { min-height: 50px; padding: 0.5rem; }
+        }
+    </style>
+</head>
+<body class="locked">
+    <div class="disclaimer" id="disclaimer">
+        <div class="disclaimer-box">
+            <p id="disclaimer-text" data-en="Disclaimer: We do not take any accountability or responsibility for your investment decisions. This content is for educational purposes only. We strongly advise you to consult with a legal financial advisor before making any investment." 
+               data-he="כתב ויתור: איננו נוטלים כל אחריות או חבות על החלטות ההשקעה שלך. תוכן זה מיועד למטרות חינוכיות בלבד. אנו ממליצים בחום להתייעץ עם יועץ פיננסי משפטי לפני ביצוע כל השקעה.">
+                Disclaimer: We do not take any accountability...
+            </p>
+            <select id="disclaimer-lang" onchange="updateDisclaimerLanguage(this.value)">
+                <option value="en">English</option>
+                <option value="he">עברית</option>
+            </select>
+            <button id="accept-disclaimer" data-en="I Understand" data-he="אני מבין">I Understand</button>
+        </div>
+    </div>
+
+    <main>
+        <header>
+            <h1 data-en="Stock Learning Hub 🚀" data-he="מרכז למידת מניות 🚀">Stock Learning Hub 🚀</h1>
+            <div class="controls">
+                <select class="language-selector" onchange="switchLanguage(this.value)">
+                    <option value="en">English</option>
+                    <option value="he">עברית</option>
+                </select>
+                <button class="theme-toggle" onclick="toggleTheme()">Toggle Theme</button>
+            </div>
+        </header>
+
+        <div class="progress-bar">
+            <div class="progress-fill" id="progress-fill"></div>
+        </div>
+
+        <section class="card-container">
+            <h2 data-en="💡 Master the Basics" data-he="💡 שלוט ביסודות">💡 Master the Basics</h2>
+            <div class="card" onclick="flipCard(this)">
+                <div class="card-inner">
+                    <div class="card-front" data-en="What is a Stock?" data-he="מהי מניה?">What is a Stock?</div>
+                    <div class="card-back" data-en="A stock represents ownership in a company." data-he="מניה מייצגת בעלות בחברה.">A stock represents ownership in a company.</div>
+                </div>
+            </div>
+            <div class="card" onclick="flipCard(this)">
+                <div class="card-inner">
+                    <div class="card-front" data-en="What is an ETF?" data-he="מהי תעודת סל?">What is an ETF?</div>
+                    <div class="card-back" data-en="An ETF is a basket of securities traded on an exchange." data-he="תעודת סל היא סל של ניירות ערך הנסחרים בבורסה.">An ETF is a basket of securities traded on an exchange.</div>
+                </div>
+            </div>
+            <div class="card" onclick="flipCard(this)">
+                <div class="card-inner">
+                    <div class="card-front" data-en="What is a Bond?" data-he="מהו אג״ח?">What is a Bond?</div>
+                    <div class="card-back" data-en="A bond is a loan made to an issuer, typically a government or corporation." data-he="אג״ח הוא הלוואה שניתנת למנפיק, בדרך כלל ממשלה או תאגיד.">A bond is a loan made to an issuer.</div>
+                </div>
+            </div>
+        </section>
+
+        <section class="chart-container">
+            <h2 data-en="📊 Live Market Data" data-he="📊 נתוני שוק בזמן אמת">📊 Live Market Data</h2>
+            <p data-en="Enter a stock ticker (e.g., AAPL):" data-he="הזן סימול מניה (למשל, AAPL):">Enter a stock ticker (e.g., AAPL):</p>
+            <input type="text" id="stock-ticker" data-en="AAPL" data-he="AAPL" placeholder="AAPL">
+            <button onclick="fetchLiveData()" data-en="Show Chart" data-he="הצג גרף">Show Chart</button>
+            <canvas id="stockChart" height="200"></canvas>
+        </section>
+
+        <section class="quiz-container">
+            <h2 data-en="❓ Investment Quiz" data-he="❓ חידון השקעות">❓ Investment Quiz</h2>
+            <p data-en="Which is typically a low-risk investment?" data-he="מהי בדרך כלל השקעה בסיכון נמוך?">Which is typically a low-risk investment?</p>
+            <button onclick="showHint()" data-en="💡 Hint" data-he="💡 רמז">💡 Hint</button>
+            <p id="hint" style="display: none;" data-en="Hint: This investment offers steady returns and is less volatile than stocks." 
+               data-he="רמז: השקעה זו מציעה תשואות יציבות ופחות תנודתית ממניות.">Hint: This investment offers...</p>
+            <button onclick="checkAnswer('Stocks')" data-en="Stocks" data-he="מניות">Stocks</button>
+            <button onclick="checkAnswer('Bonds')" data-en="Bonds" data-he="אגרות חוב">Bonds</button>
+            <p id="quiz-result" class="puzzle-result"></p>
+        </section>
+
+        <section class="puzzle-container">
+            <h2 data-en="🧩 Stock Puzzle Challenge" data-he="🧩 אתגר פאזל מניות">🧩 Stock Puzzle Challenge</h2>
+            <p data-en="Drag terms to their correct definitions!" data-he="גרור מונחים להגדרות הנכונות שלהם!">Drag terms to their correct definitions!</p>
+            <div class="puzzle-grid" id="puzzle-grid"></div>
+            <button onclick="resetPuzzle()" data-en="Reset Puzzle" data-he="אפס את הפאזל">Reset Puzzle</button>
+            <p id="puzzle-result" class="puzzle-result"></p>
+        </section>
+
+        <section class="chatbot">
+            <h2 data-en="💬 Investment Chatbot" data-he="💬 צ'אטבוט השקעות">💬 Investment Chatbot</h2>
+            <p data-en="Ask me anything about investments!" data-he="שאל אותי כל דבר על השקעות!">Ask me anything about investments!</p>
+            <input type="text" id="user-question" data-en="How do dividends work?" data-he="איך דיבידנדים עובדים?" placeholder="How do dividends work?">
+            <button onclick="askAI()" data-en="Ask" data-he="שאל">Ask</button>
+            <button onclick="startVoiceRecognition()" data-en="🎙️ Speak" data-he="🎙️ דבר">🎙️ Speak</button>
+            <p id="ai-response"></p>
+            <div class="suggestions" id="suggestions"></div>
+        </section>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Theme Persistence
+        if (localStorage.getItem("theme") === "light") document.body.classList.add("light-mode");
+
+        function toggleTheme() {
+            document.body.classList.toggle("light-mode");
+            localStorage.setItem("theme", document.body.classList.contains("light-mode") ? "light" : "dark");
+            updateProgress();
+        }
+
+        // Language Switching
+        function switchLanguage(lang) {
+            document.body.classList.toggle("hebrew", lang === "he");
+            document.querySelectorAll("[data-en]").forEach(el => {
+                el.textContent = el.dataset[lang];
+                if (el.tagName === "INPUT") el.placeholder = el.dataset[lang];
+            });
+            resetPuzzle();
+            updateProgress();
+        }
+
+        // Disclaimer Language Update
+        function updateDisclaimerLanguage(lang) {
+            const disclaimerText = document.getElementById("disclaimer-text");
+            disclaimerText.textContent = disclaimerText.dataset[lang];
+            document.getElementById("accept-disclaimer").textContent = document.getElementById("accept-disclaimer").dataset[lang];
+            document.body.classList.toggle("hebrew", lang === "he");
+        }
+
+        // Disclaimer Handling
+        function acceptDisclaimer() {
+            document.getElementById("disclaimer").style.display = "none";
+            document.body.classList.remove("locked");
+            initPuzzle();
+            fetchLiveData();
+            updateProgress();
+        }
+
+        document.getElementById("accept-disclaimer").addEventListener("click", acceptDisclaimer);
+        document.getElementById("accept-disclaimer").addEventListener("touchend", (e) => {
+            e.preventDefault();
+            acceptDisclaimer();
+        });
+
+        // Progress Tracker
+        let completedTasks = { cards: 0, quiz: false, puzzle: false };
+        function updateProgress() {
+            const totalTasks = 5; // 3 cards + quiz + puzzle
+            let completed = completedTasks.cards + (completedTasks.quiz ? 1 : 0) + (completedTasks.puzzle ? 1 : 0);
+            const progress = (completed / totalTasks) * 100;
+            document.getElementById("progress-fill").style.width = `${progress}%`;
+        }
+
+        window.addEventListener("scroll", updateProgress);
+
+        // Card Flip Functionality
+        function flipCard(card) {
+            card.classList.toggle("flipped");
+            if (card.classList.contains("flipped") && completedTasks.cards < 3) {
+                completedTasks.cards++;
+                updateProgress();
+            }
+        }
+
+        // Live Market Data Chart
+        let chartInstance = null;
+        let isFetching = false;
+        async function fetchLiveData() {
+            if (isFetching) {
+                alert("Please wait before fetching again.");
+                return;
+            }
+            isFetching = true;
+            setTimeout(() => isFetching = false, 12000);
+
+            const ticker = document.getElementById("stock-ticker").value.toUpperCase() || "AAPL";
+            const apiKey = "YOUR_ALPHA_VANTAGE_API_KEY"; // Replace with your key
+            const url = `https://www.alphavantage.co/query?function=TIME_SERIES_INTRADAY&symbol=${ticker}&interval=1min&apikey=${apiKey}`;
+            const lang = document.body.classList.contains("hebrew") ? "he" : "en";
+
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+                const timeSeries = data["Time Series (1min)"];
+
+                if (!timeSeries) {
+                    alert(data["Error Message"] || data["Information"] || 
+                        (lang === "he" ? "סימול לא תקין או הגבלת API." : "Invalid ticker or API limit reached."));
+                    return;
+                }
+
+                const labels = Object.keys(timeSeries).slice(0, 60).reverse();
+                const prices = labels.map(time => parseFloat(timeSeries[time]["4. close"]));
+
+                if (chartInstance) chartInstance.destroy();
+                const ctx = document.getElementById("stockChart").getContext("2d");
+                chartInstance = new Chart(ctx, {
+                    type: "line",
+                    data: {
+                        labels: labels.map(time => new Date(time).toLocaleTimeString()),
+                        datasets: [{
+                            label: `${ticker} Price`,
+                            data: prices,
+                            borderColor: "rgba(0, 212, 255, 1)",
+                            backgroundColor: "rgba(0, 212, 255, 0.2)",
+                            fill: true,
+                            tension: 0.1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: { tooltip: { mode: "index", intersect: false } },
+                        scales: {
+                            x: { title: { display: true, text: lang === "he" ? "זמן" : "Time" } },
+                            y: { title: { display: true, text: lang === "he" ? "מחיר (דולר)" : "Price (USD)" } }
+                        }
+                    }
+                });
+            } catch (error) {
+                console.error("Error fetching live data:", error);
+                alert(lang === "he" ? "נכשל בטעינת נתונים." : "Failed to fetch live data.");
+            }
+            updateProgress();
+        }
+
+        // Quiz Logic
+        function showHint() {
+            const hint = document.getElementById("hint");
+            hint.style.display = hint.style.display === "none" ? "block" : "none";
+            updateProgress();
+        }
+
+        function checkAnswer(answer) {
+            const result = document.getElementById("quiz-result");
+            const lang = document.body.classList.contains("hebrew") ? "he" : "en";
+            result.style.opacity = "0";
+            setTimeout(() => {
+                result.textContent = answer === "Bonds" 
+                    ? (lang === "he" ? "✅ נכון! אגרות חוב נחשבות בטוחות." : "✅ Correct! Bonds are considered safe.")
+                    : (lang === "he" ? "❌ לא נכון! נסה שוב." : "❌ Wrong! Try again.");
+                result.style.opacity = "1";
+                if (answer === "Bonds" && !completedTasks.quiz) {
+                    completedTasks.quiz = true;
+                    updateProgress();
+                }
+            }, 200);
+        }
+
+        // Puzzle Game
+        const puzzleData = {
+            en: [
+                { term: "Stock", def: "Ownership in a company" },
+                { term: "ETF", def: "Basket of securities" },
+                { term: "Bond", def: "Loan to issuer" },
+                { term: "Dividend", def: "Profit payout" }
+            ],
+            he: [
+                { term: "מניה", def: "בעלות בחברה" },
+                { term: "תעודת סל", def: "סל ניירות ערך" },
+                { term: "אג״ח", def: "הלוואה למנפיק" },
+                { term: "דיבידנד", def: "תשלום רווח" }
+            ]
+        };
+
+        let draggedElement = null;
+        let score = 0;
+        let originalPositions = {};
+
+        function shuffle(array) {
+            return array.sort(() => Math.random() - 0.5);
+        }
+
+        function initPuzzle() {
+            const lang = document.body.classList.contains("hebrew") ? "he" : "en";
+            const grid = document.getElementById("puzzle-grid");
+            grid.innerHTML = "";
+            const terms = shuffle([...puzzleData[lang]]);
+            const defs = shuffle([...puzzleData[lang]]);
+            score = 0;
+            document.getElementById("puzzle-result").textContent = "";
+            originalPositions = {};
+
+            const termsContainer = document.createElement("div");
+            termsContainer.className = "terms-container";
+
+            terms.forEach((item, index) => {
+                const termEl = document.createElement("div");
+                termEl.className = "puzzle-piece";
+                termEl.textContent = item.term;
+                termEl.draggable = true;
+                termEl.dataset.term = item.term;
+                termEl.dataset.index = index;
+                termEl.addEventListener("dragstart", dragStart);
+                termEl.addEventListener("dragend", dragEnd);
+                termEl.addEventListener("touchstart", touchStart, { passive: false });
+                termEl.addEventListener("touchmove", touchMove, { passive: false });
+                termEl.addEventListener("touchend", touchEnd);
+                termsContainer.appendChild(termEl);
+                originalPositions[item.term] = termEl;
+            });
+
+            grid.appendChild(termsContainer);
+
+            defs.forEach(item => {
+                const dropZone = document.createElement("div");
+                dropZone.className = "drop-zone";
+                dropZone.textContent = item.def;
+                dropZone.dataset.def = item.def;
+                dropZone.addEventListener("dragover", dragOver);
+                dropZone.addEventListener("drop", drop);
+                grid.appendChild(dropZone);
+            });
+
+            updateProgress();
+        }
+
+        function dragStart(e) {
+            draggedElement = e.target;
+            e.dataTransfer.setData("text/plain", e.target.dataset.term);
+            draggedElement.style.opacity = "0.7";
+            draggedElement.style.zIndex = "10";
+        }
+
+        function dragEnd(e) {
+            if (!draggedElement) return;
+            draggedElement.style.opacity = "1";
+            draggedElement.style.zIndex = "1";
+            const dropZone = document.elementFromPoint(e.clientX, e.clientY)?.closest(".drop-zone");
+            if (!dropZone || !handleDrop(dropZone)) {
+                resetPiecePosition(draggedElement);
+            }
+            draggedElement = null;
+        }
+
+        function dragOver(e) {
+            e.preventDefault();
+        }
+
+        function drop(e) {
+            e.preventDefault();
+            if (!draggedElement) return;
+            const dropZone = e.target.closest(".drop-zone");
+            handleDrop(dropZone);
+        }
+
+        function touchStart(e) {
+            e.preventDefault();
+            draggedElement = e.target;
+            draggedElement.style.opacity = "0.7";
+            draggedElement.style.zIndex = "10";
+            const touch = e.touches[0];
+            draggedElement.dataset.offsetX = touch.clientX - draggedElement.getBoundingClientRect().left;
+            draggedElement.dataset.offsetY = touch.clientY - draggedElement.getBoundingClientRect().top;
+        }
+
+        function touchMove(e) {
+            e.preventDefault();
+            if (!draggedElement) return;
+            const touch = e.touches[0];
+            draggedElement.style.position = "absolute";
+            draggedElement.style.left = `${touch.clientX - parseFloat(draggedElement.dataset.offsetX)}px`;
+            draggedElement.style.top = `${touch.clientY - parseFloat(draggedElement.dataset.offsetY)}px`;
+        }
+
+        function touchEnd(e) {
+            if (!draggedElement) return;
+            draggedElement.style.opacity = "1";
+            draggedElement.style.zIndex = "1";
+            const touch = e.changedTouches[0];
+            const dropZone = document.elementFromPoint(touch.clientX, touch.clientY)?.closest(".drop-zone");
+            if (!dropZone || !handleDrop(dropZone)) {
+                resetPiecePosition(draggedElement);
+            }
+            draggedElement.style.position = "relative";
+            draggedElement.style.left = "0";
+            draggedElement.style.top = "0";
+            draggedElement = null;
+        }
+
+        function handleDrop(dropZone) {
+            if (!draggedElement || dropZone.classList.contains("filled")) return false;
+
+            const term = draggedElement.dataset.term;
+            const lang = document.body.classList.contains("hebrew") ? "he" : "en";
+            const correctDef = puzzleData[lang].find(item => item.term === term).def;
+
+            if (dropZone.dataset.def === correctDef) {
+                draggedElement.classList.add("correct");
+                draggedElement.draggable = false;
+                dropZone.innerHTML = "";
+                dropZone.appendChild(draggedElement);
+                dropZone.classList.add("filled");
+                score++;
+                checkPuzzleComplete();
+                return true;
+            }
+            return false;
+        }
+
+        function resetPiecePosition(piece) {
+            const termsContainer = document.querySelector(".terms-container");
+            const original = originalPositions[piece.dataset.term];
+            if (original.parentNode !== termsContainer) {
+                termsContainer.appendChild(piece);
+            }
+        }
+
+        function checkPuzzleComplete() {
+            const lang = document.body.classList.contains("hebrew") ? "he" : "en";
+            if (score === puzzleData[lang].length) {
+                document.getElementById("puzzle-result").textContent = lang === "he" ? "🎉 כל הכבוד!" : "🎉 Great Job!";
+                if (!completedTasks.puzzle) {
+                    completedTasks.puzzle = true;
+                    updateProgress();
+                }
+            }
+        }
+
+        function resetPuzzle() {
+            initPuzzle();
+            completedTasks.puzzle = false;
+            updateProgress();
+        }
+
+        // Chatbot with Voice Recognition
+        const recognition = window.SpeechRecognition || window.webkitSpeechRecognition ? new (window.SpeechRecognition || window.webkitSpeechRecognition)() : null;
+        if (recognition) {
+            recognition.continuous = false;
+            recognition.interimResults = false;
+            recognition.maxAlternatives = 1;
+        }
+
+        function startVoiceRecognition() {
+            if (!recognition) {
+                const lang = document.body.classList.contains("hebrew") ? "he" : "en";
+                alert(lang === "he" ? "זיהוי קולי אינו נתמך בדפדפן זה." : "Speech recognition not supported in this browser.");
+                return;
+            }
+
+            recognition.lang = document.body.classList.contains("hebrew") ? "he-IL" : "en-US";
+            recognition.start();
+
+            recognition.onstart = () => {
+                console.log("Voice recognition started...");
+            };
+
+            recognition.onresult = (event) => {
+                const transcript = event.results[0][0].transcript.trim();
+                console.log("Recognized speech:", transcript);
+                document.getElementById("user-question").value = transcript;
+                askAI(transcript);
+            };
+
+            recognition.onerror = (event) => {
+                const lang = document.body.classList.contains("hebrew") ? "he" : "en";
+                console.error("Speech recognition error:", event.error);
+                alert(lang === "he" ? `שגיאה בזיהוי קולי: ${event.error}` : `Speech recognition error: ${event.error}`);
+            };
+
+            recognition.onend = () => {
+                console.log("Voice recognition ended.");
+            };
+        }
+
+        const knowledgeBase = {
+            en: {
+                "stock": "Stocks are shares of a company. They rise or fall based on performance and market sentiment.",
+                "etf": "ETFs bundle multiple assets into one tradable unit, offering diversification.",
+                "bond": "Bonds are debt instruments. You lend money and get interest back.",
+                "dividend": "Dividends are profit payouts to shareholders, usually quarterly."
+            },
+            he: {
+                "מניה": "מניות הן חלקים של חברה. ערכן משתנה לפי ביצועים וסנטימנט השוק.",
+                "תעודת סל": "תעודות סל מאגדות נכסים מרובים ליחידה סחירה, ומציעות גיוון.",
+                "אג״ח": "אגרות חוב הן כלי חוב. אתה מלווה כסף ומקבל ריבית.",
+                "דיבידנד": "דיבידנדים הם תשלומי רווח לבעלי מניות, בדרך כלל רבעוניים."
+            }
+        };
+
+        const relatedQuestions = {
+            en: {
+                "stock": ["How do I buy stocks?", "What’s a stock market crash?"],
+                "etf": ["What’s the best ETF for beginners?", "How are ETFs different from mutual funds?"],
+                "bond": ["What’s a bond yield?", "Are bonds safe during a recession?"],
+                "dividend": ["Which companies pay the best dividends?", "How are dividends taxed?"]
+            },
+            he: {
+                "מניה": ["איך קונים מניות?", "מהו קריסת שוק המניות?"],
+                "תעודת סל": ["מהי תעודת סל מומלצת למתחילים?", "במה שונה תעודת סל מקרן נאמנות?"],
+                "אג״ח": ["מהי תשואה של אג״ח?", "האם אג״ח בטוחות במשבר?"],
+                "דיבידנד": ["אילו חברות משלמות דיבידנדים גבוהים?", "איך מחשבים מס על דיבידנדים?"]
+            }
+        };
+
+        function askAI(question = null) {
+            const input = (question || document.getElementById("user-question").value).toLowerCase().trim();
+            const responseEl = document.getElementById("ai-response");
+            const suggestionsEl = document.getElementById("suggestions");
+            const lang = document.body.classList.contains("hebrew") ? "he" : "en";
+            let response = "";
+
+            response = Object.keys(knowledgeBase[lang]).reduce((resp, key) => 
+                input.includes(key) ? knowledgeBase[lang][key] : resp, 
+                lang === "he" ? "לא הבנתי, נסה שוב!" : "I didn’t understand, try again!"
+            );
+
+            responseEl.style.opacity = "0";
+            setTimeout(() => {
+                responseEl.textContent = response;
+                responseEl.style.opacity = "1";
+            }, 200);
+
+            suggestionsEl.innerHTML = "";
+            const matchedKey = Object.keys(knowledgeBase[lang]).find(key => input.includes(key));
+            if (matchedKey && relatedQuestions[lang][matchedKey]) {
+                relatedQuestions[lang][matchedKey].forEach(q => {
+                    const suggestion = document.createElement("div");
+                    suggestion.className = "suggestion";
+                    suggestion.textContent = q;
+                    suggestion.onclick = () => askAI(q.toLowerCase());
+                    suggestionsEl.appendChild(suggestion);
+                });
+            }
+            updateProgress();
+        }
+
+        // Initial Setup
+        window.onload = () => {
+            updateDisclaimerLanguage("en"); // Start with English disclaimer
+            // Note: Main content language is set to English by default via switchLanguage("en") after accepting disclaimer
+        };
+    </script>
+</body>
+</html>
