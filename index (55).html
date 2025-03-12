@@ -654,7 +654,7 @@
                 termEl.addEventListener("touchmove", touchMove, { passive: false });
                 termEl.addEventListener("touchend", touchEnd);
                 termsContainer.appendChild(termEl);
-                originalPositions[item.term] = termEl;
+                originalPositions[item.term] = termEl.cloneNode(true); // Store original for reset
             });
 
             grid.appendChild(termsContainer);
@@ -666,7 +666,6 @@
                 dropZone.dataset.def = item.def;
                 dropZone.addEventListener("dragover", dragOver);
                 dropZone.addEventListener("drop", drop);
-                dropZone.addEventListener("touchenter", e => e.preventDefault());
                 grid.appendChild(dropZone);
             });
 
@@ -708,18 +707,22 @@
             draggedElement.style.opacity = "0.7";
             draggedElement.style.zIndex = "10";
             const touch = e.touches[0];
-            draggedElement.dataset.offsetX = touch.clientX - draggedElement.getBoundingClientRect().left;
-            draggedElement.dataset.offsetY = touch.clientY - draggedElement.getBoundingClientRect().top;
+            const rect = draggedElement.getBoundingClientRect();
+            draggedElement.dataset.offsetX = touch.clientX - rect.left;
+            draggedElement.dataset.offsetY = touch.clientY - rect.top;
+            draggedElement.dataset.originalParent = draggedElement.parentElement.className;
             draggedElement.style.transition = "none"; // Disable transitions during drag
+            document.body.appendChild(draggedElement); // Move to body to avoid clipping
         }
 
         function touchMove(e) {
             e.preventDefault();
             if (!draggedElement) return;
             const touch = e.touches[0];
-            draggedElement.style.position = "absolute";
+            const scrollY = window.scrollY || window.pageYOffset;
+            draggedElement.style.position = "fixed"; // Use fixed positioning for smoother movement
             draggedElement.style.left = `${touch.clientX - parseFloat(draggedElement.dataset.offsetX)}px`;
-            draggedElement.style.top = `${touch.clientY - parseFloat(draggedElement.dataset.offsetY)}px`;
+            draggedElement.style.top = `${touch.clientY - parseFloat(draggedElement.dataset.offsetY) - scrollY}px`;
         }
 
         function touchEnd(e) {
@@ -729,12 +732,16 @@
             draggedElement.style.transition = "all 0.3s ease"; // Restore transitions
             const touch = e.changedTouches[0];
             const dropZone = document.elementFromPoint(touch.clientX, touch.clientY)?.closest(".drop-zone");
-            if (!dropZone || !handleDrop(dropZone)) {
+            
+            if (dropZone && handleDrop(dropZone)) {
+                // Successfully dropped
+                draggedElement.style.position = "relative";
+                draggedElement.style.left = "0";
+                draggedElement.style.top = "0";
+            } else {
                 resetPiecePosition(draggedElement);
             }
-            draggedElement.style.position = "relative";
-            draggedElement.style.left = "0";
-            draggedElement.style.top = "0";
+            
             draggedElement = null;
         }
 
@@ -748,6 +755,9 @@
             if (dropZone.dataset.def === correctDef) {
                 draggedElement.classList.add("correct");
                 draggedElement.draggable = false;
+                draggedElement.removeEventListener("touchstart", touchStart);
+                draggedElement.removeEventListener("touchmove", touchMove);
+                draggedElement.removeEventListener("touchend", touchEnd);
                 dropZone.innerHTML = "";
                 dropZone.appendChild(draggedElement);
                 dropZone.classList.add("filled");
@@ -760,6 +770,9 @@
 
         function resetPiecePosition(piece) {
             const termsContainer = document.querySelector(".terms-container");
+            piece.style.position = "relative";
+            piece.style.left = "0";
+            piece.style.top = "0";
             termsContainer.appendChild(piece);
         }
 
