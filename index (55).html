@@ -217,7 +217,7 @@
             transform: rotateY(10deg);
         }
 
-        .chart-container, .quiz-container, .chatbot, .puzzle-container {
+        .quiz-container, .chatbot, .puzzle-container {
             max-width: 95vw;
             width: 100%;
             margin: calc(var(--spacing-base) * 2) auto;
@@ -228,7 +228,7 @@
             animation: fadeInUp 0.5s ease;
         }
 
-        .chart-container input, .chatbot input {
+        .chatbot input {
             padding: 0.8rem;
             border: 2px solid var(--primary);
             border-radius: 30px;
@@ -239,7 +239,7 @@
             margin-bottom: 1rem;
         }
 
-        .light-mode .chart-container input, .light-mode .chatbot input {
+        .light-mode .chatbot input {
             background: #e0e7ff;
             color: #2c3e50;
         }
@@ -317,7 +317,7 @@
 
         .terms-container {
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
             gap: 0.5rem;
             margin-bottom: 1rem;
         }
@@ -340,6 +340,7 @@
 
         .puzzle-piece {
             cursor: move;
+            user-select: none;
         }
 
         .puzzle-piece.correct {
@@ -430,8 +431,7 @@
             h2 { font-size: 1.2rem; }
             .card { height: 15vh; min-height: 120px; }
             .card-container { grid-template-columns: 1fr 1fr; }
-            .terms-container { grid-template-columns: 1fr; }
-            .puzzle-piece, .drop-zone { min-height: 50px; padding: 0.5rem; }
+            .puzzle-piece, .drop-zone { min-height: 50px; padding: 0.5rem; font-size: 0.8rem; }
         }
     </style>
 </head>
@@ -488,14 +488,6 @@
             </div>
         </section>
 
-        <section class="chart-container">
-            <h2 data-en="📊 Live Market Data" data-he="📊 נתוני שוק בזמן אמת">📊 Live Market Data</h2>
-            <p data-en="Enter a stock ticker (e.g., AAPL):" data-he="הזן סימול מניה (למשל, AAPL):">Enter a stock ticker (e.g., AAPL):</p>
-            <input type="text" id="stock-ticker" data-en="AAPL" data-he="AAPL" placeholder="AAPL">
-            <button onclick="fetchLiveData()" data-en="Show Chart" data-he="הצג גרף">Show Chart</button>
-            <canvas id="stockChart" height="200"></canvas>
-        </section>
-
         <section class="quiz-container">
             <h2 data-en="❓ Investment Quiz" data-he="❓ חידון השקעות">❓ Investment Quiz</h2>
             <p data-en="Which is typically a low-risk investment?" data-he="מהי בדרך כלל השקעה בסיכון נמוך?">Which is typically a low-risk investment?</p>
@@ -526,7 +518,6 @@
         </section>
     </main>
 
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
         // Theme Persistence
         if (localStorage.getItem("theme") === "light") document.body.classList.add("light-mode");
@@ -561,7 +552,6 @@
             document.getElementById("disclaimer").style.display = "none";
             document.body.classList.remove("locked");
             initPuzzle();
-            fetchLiveData();
             updateProgress();
         }
 
@@ -589,67 +579,6 @@
                 completedTasks.cards++;
                 updateProgress();
             }
-        }
-
-        // Live Market Data Chart
-        let chartInstance = null;
-        let isFetching = false;
-        async function fetchLiveData() {
-            if (isFetching) {
-                alert("Please wait before fetching again.");
-                return;
-            }
-            isFetching = true;
-            setTimeout(() => isFetching = false, 12000);
-
-            const ticker = document.getElementById("stock-ticker").value.toUpperCase() || "AAPL";
-            const apiKey = "YOUR_ALPHA_VANTAGE_API_KEY"; // Replace with your key
-            const url = `https://www.alphavantage.co/query?function=TIME_SERIES_INTRADAY&symbol=${ticker}&interval=1min&apikey=${apiKey}`;
-            const lang = document.body.classList.contains("hebrew") ? "he" : "en";
-
-            try {
-                const response = await fetch(url);
-                const data = await response.json();
-                const timeSeries = data["Time Series (1min)"];
-
-                if (!timeSeries) {
-                    alert(data["Error Message"] || data["Information"] || 
-                        (lang === "he" ? "סימול לא תקין או הגבלת API." : "Invalid ticker or API limit reached."));
-                    return;
-                }
-
-                const labels = Object.keys(timeSeries).slice(0, 60).reverse();
-                const prices = labels.map(time => parseFloat(timeSeries[time]["4. close"]));
-
-                if (chartInstance) chartInstance.destroy();
-                const ctx = document.getElementById("stockChart").getContext("2d");
-                chartInstance = new Chart(ctx, {
-                    type: "line",
-                    data: {
-                        labels: labels.map(time => new Date(time).toLocaleTimeString()),
-                        datasets: [{
-                            label: `${ticker} Price`,
-                            data: prices,
-                            borderColor: "rgba(0, 212, 255, 1)",
-                            backgroundColor: "rgba(0, 212, 255, 0.2)",
-                            fill: true,
-                            tension: 0.1
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        plugins: { tooltip: { mode: "index", intersect: false } },
-                        scales: {
-                            x: { title: { display: true, text: lang === "he" ? "זמן" : "Time" } },
-                            y: { title: { display: true, text: lang === "he" ? "מחיר (דולר)" : "Price (USD)" } }
-                        }
-                    }
-                });
-            } catch (error) {
-                console.error("Error fetching live data:", error);
-                alert(lang === "he" ? "נכשל בטעינת נתונים." : "Failed to fetch live data.");
-            }
-            updateProgress();
         }
 
         // Quiz Logic
@@ -737,6 +666,7 @@
                 dropZone.dataset.def = item.def;
                 dropZone.addEventListener("dragover", dragOver);
                 dropZone.addEventListener("drop", drop);
+                dropZone.addEventListener("touchenter", e => e.preventDefault());
                 grid.appendChild(dropZone);
             });
 
@@ -780,6 +710,7 @@
             const touch = e.touches[0];
             draggedElement.dataset.offsetX = touch.clientX - draggedElement.getBoundingClientRect().left;
             draggedElement.dataset.offsetY = touch.clientY - draggedElement.getBoundingClientRect().top;
+            draggedElement.style.transition = "none"; // Disable transitions during drag
         }
 
         function touchMove(e) {
@@ -795,6 +726,7 @@
             if (!draggedElement) return;
             draggedElement.style.opacity = "1";
             draggedElement.style.zIndex = "1";
+            draggedElement.style.transition = "all 0.3s ease"; // Restore transitions
             const touch = e.changedTouches[0];
             const dropZone = document.elementFromPoint(touch.clientX, touch.clientY)?.closest(".drop-zone");
             if (!dropZone || !handleDrop(dropZone)) {
@@ -828,10 +760,7 @@
 
         function resetPiecePosition(piece) {
             const termsContainer = document.querySelector(".terms-container");
-            const original = originalPositions[piece.dataset.term];
-            if (original.parentNode !== termsContainer) {
-                termsContainer.appendChild(piece);
-            }
+            termsContainer.appendChild(piece);
         }
 
         function checkPuzzleComplete() {
@@ -869,25 +798,15 @@
             recognition.lang = document.body.classList.contains("hebrew") ? "he-IL" : "en-US";
             recognition.start();
 
-            recognition.onstart = () => {
-                console.log("Voice recognition started...");
-            };
-
             recognition.onresult = (event) => {
                 const transcript = event.results[0][0].transcript.trim();
-                console.log("Recognized speech:", transcript);
                 document.getElementById("user-question").value = transcript;
                 askAI(transcript);
             };
 
             recognition.onerror = (event) => {
                 const lang = document.body.classList.contains("hebrew") ? "he" : "en";
-                console.error("Speech recognition error:", event.error);
                 alert(lang === "he" ? `שגיאה בזיהוי קולי: ${event.error}` : `Speech recognition error: ${event.error}`);
-            };
-
-            recognition.onend = () => {
-                console.log("Voice recognition ended.");
             };
         }
 
@@ -955,8 +874,7 @@
 
         // Initial Setup
         window.onload = () => {
-            updateDisclaimerLanguage("en"); // Start with English disclaimer
-            // Note: Main content language is set to English by default via switchLanguage("en") after accepting disclaimer
+            updateDisclaimerLanguage("en");
         };
     </script>
 </body>
